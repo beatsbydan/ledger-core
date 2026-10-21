@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: ledgercore
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/ledgercore}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  liquibase:
+    change-log: classpath:db/changelog/changelog-master.yaml
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:19092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+
+server:
+  port: ${SERVER_PORT:8080}
+
+ledgercore:
+  idempotency:
+    in-progress-wait-ms: 1500
+    in-progress-poll-interval-ms: 150
+    in-progress-stale-after-seconds: 30
+  kafka:
+    topic: ledgercore.journal-entries
+  outbox:
+    poll-interval-ms: 1000
+    batch-size: 50
+    send-timeout-ms: 5000
+  reconciliation:
+    cron: ${RECONCILIATION_CRON:0 0 2 * * *}
+    statement-file-path: ${RECONCILIATION_STATEMENT_FILE:./bank-statement.csv}

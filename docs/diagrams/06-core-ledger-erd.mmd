@@ -1,0 +1,39 @@
+%% Fig. 6 — A reversal is a new, separate journal entry pointing back at the one it
+%% corrects; nothing is ever edited in place.
+erDiagram
+    ACCOUNTS ||--o{ JOURNAL_LINES : "has lines"
+    JOURNAL_ENTRIES ||--o{ JOURNAL_LINES : "contains"
+    JOURNAL_ENTRIES ||--o| JOURNAL_ENTRIES : "reverses"
+    IDEMPOTENCY_KEYS }o--o| JOURNAL_ENTRIES : "resolves to"
+
+    ACCOUNTS {
+        bigint id PK
+        varchar account_number UK
+        varchar owner_name
+        varchar account_type
+        varchar status
+        char currency
+        bigint balance_minor_units
+    }
+    JOURNAL_ENTRIES {
+        bigint id PK
+        uuid entry_uuid UK
+        varchar entry_type
+        bigint reversed_entry_id FK
+        char currency
+    }
+    JOURNAL_LINES {
+        bigint id PK
+        bigint journal_entry_id FK
+        bigint account_id FK
+        varchar direction
+        bigint amount_minor_units
+        smallint line_number
+    }
+    IDEMPOTENCY_KEYS {
+        bigint id PK
+        varchar idempotency_key UK
+        varchar request_fingerprint
+        varchar status
+        bigint journal_entry_id FK
+    }

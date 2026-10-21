@@ -1,0 +1,24 @@
+services:
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: ledgercore-kafka
+    hostname: kafka
+    ports:
+      - "19092:9094"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      # Two PLAINTEXT listeners, not one: the app runs on the Windows host and needs
+      # localhost:19092; sibling tools run inside this container's own network (docker exec,
+      # or another container on the compose network) and need the kafka:9092 address instead -
+      # a client always gets redirected to whichever address the broker advertises, so one
+      # listener can't satisfy both.
+      KAFKA_LISTENERS: DOCKER://:9092,HOST://:9094,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: DOCKER://kafka:9092,HOST://localhost:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,DOCKER:PLAINTEXT,HOST:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"

@@ -1,0 +1,15 @@
+%% Fig. 2 — Account creation: success and the one failure mode, a duplicate account number.
+sequenceDiagram
+    participant C as Client
+    participant API as Account API
+    participant DB as accounts table
+
+    C->>API: POST /accounts (accountNumber, ownerName, currency)
+    API->>DB: INSERT INTO accounts
+    alt account_number is unique
+        DB-->>API: row created
+        API-->>C: 201 Created
+    else account_number already exists
+        DB-->>API: unique violation
+        API-->>C: 409 Conflict
+    end

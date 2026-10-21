@@ -1,0 +1,20 @@
+%% Fig. 8 — SKIP LOCKED lets more than one relay instance poll safely without
+%% double-claiming the same row. The crash branch is the deliberate cost of
+%% at-least-once delivery, not a bug to design away.
+sequenceDiagram
+    participant REL as Outbox Relay
+    participant OUT as outbox_events
+    participant KFK as Kafka
+
+    REL->>OUT: SELECT ... FOR UPDATE SKIP LOCKED WHERE status = PENDING LIMIT n
+    OUT-->>REL: batch of rows
+    loop each row
+        REL->>KFK: publish(key = entry_uuid, payload)
+        alt publish acknowledged
+            REL->>OUT: UPDATE status = PUBLISHED
+        else broker unreachable or timeout
+            Note over REL,OUT: row stays PENDING, attempts += 1 — retried next poll
+        else relay crashes after ack, before UPDATE
+            Note over REL,KFK: row still PENDING on restart — republished;<br/>Kafka sees a duplicate, consumers dedupe by entry_uuid
+        end
+    end

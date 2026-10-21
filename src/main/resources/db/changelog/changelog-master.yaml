@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/001-create-accounts.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/002-create-journal-entries.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/003-create-journal-lines.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/004-journal-invariant-triggers.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/005-create-idempotency-keys.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/006-create-outbox-events.sql
+      relativeToChangelogFile: false
+  - include:
+      file: db/changelog/007-create-reconciliation-tables.sql
+      relativeToChangelogFile: false

@@ -1,0 +1,13 @@
+%% Fig. 7 — The outbox row is written by the same statement block that writes the
+%% journal, not by a second transaction that could fail independently.
+sequenceDiagram
+    participant API as Transfer API
+    participant LED as journal_entries / lines
+    participant OUT as outbox_events
+
+    rect rgba(168, 51, 31, 0.10)
+        Note over API,OUT: same locked transaction as Fig. 3
+        API->>LED: INSERT journal entry + lines
+        API->>OUT: INSERT event (status PENDING, payload = entry summary)
+        API->>API: COMMIT — both rows exist, or neither does
+    end

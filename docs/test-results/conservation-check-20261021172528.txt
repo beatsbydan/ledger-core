@@ -1,0 +1,7 @@
+﻿Run ID: 20261021172528
+Account count: 100
+Opening balance per account (minor units): 10000000
+Expected total: 1000000000
+Actual total:   1000000000
+Drift:          0
+Result:         PASS

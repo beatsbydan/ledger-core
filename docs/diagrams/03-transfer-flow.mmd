@@ -1,0 +1,30 @@
+%% Fig. 3 — Pre-lock rejections cost nothing; once both accounts are locked (tinted band),
+%% the transfer either fully commits or fully rolls back.
+sequenceDiagram
+    participant C as Client
+    participant API as Transfer API
+    participant ACC as accounts
+    participant LED as journal_entries / lines
+
+    C->>API: POST /transfers (Idempotency-Key, source, destination, amount)
+
+    alt source == destination
+        API-->>C: 400 Bad Request
+    else source or destination not found
+        API-->>C: 404 Not Found
+    else
+        rect rgba(168, 51, 31, 0.10)
+            API->>ACC: SELECT ... FOR UPDATE, ascending account id
+            ACC-->>API: both rows locked
+            alt either account not ACTIVE
+                API-->>C: 409 Account Not Active
+            else source balance less than amount
+                API-->>C: 422 Insufficient Funds
+            else
+                API->>LED: INSERT journal entry + debit / credit lines
+                API->>ACC: apply balance change on locked rows
+                API->>API: COMMIT — deferred trigger verifies lines sum to zero
+                API-->>C: 201 Created
+            end
+        end
+    end

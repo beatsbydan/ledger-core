@@ -1,0 +1,27 @@
+%% Fig. 10 — The only two ways this run doesn't finish COMPLETED: a duplicate trigger
+%% is rejected outright, or the file itself is missing — never a single bad row inside it.
+sequenceDiagram
+    participant SCHED as Scheduler (nightly cron)
+    participant JOB as Reconciliation Job
+    participant RUN as reconciliation_runs
+    participant SRC as ledger stream + bank file stream
+    participant MIS as reconciliation_mismatches
+
+    SCHED->>JOB: trigger
+    JOB->>RUN: a run already RUNNING for today?
+    alt a run is already in progress
+        JOB-->>SCHED: skip — reject duplicate trigger
+    else bank statement file missing or unreadable
+        JOB->>RUN: INSERT run (status FAILED, reason)
+    else
+        JOB->>RUN: INSERT run (status RUNNING)
+        rect rgba(168, 51, 31, 0.10)
+            Note over JOB,SRC: merge-join — see Fig. 11
+            JOB->>SRC: stream both sides, ORDER BY reference
+            opt a statement line is malformed
+                Note over JOB,SRC: log and skip that row — the run continues
+            end
+            JOB->>MIS: INSERT one row per mismatch found
+        end
+        JOB->>RUN: UPDATE run (status COMPLETED, counts)
+    end

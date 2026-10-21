@@ -1,0 +1,30 @@
+%% Fig. 5 — Both transfers request Account A before Account B, regardless of direction,
+%% so Transfer 2 simply queues instead of deadlocking.
+sequenceDiagram
+    participant T1 as Transfer 1, A to B
+    participant T2 as Transfer 2, B to A
+    participant AccA as Account A, id 1
+    participant AccB as Account B, id 2
+
+    par Transfer 1 acquires locks
+        T1->>AccA: lock id 1 (lower id, first)
+        AccA-->>T1: locked
+        T1->>AccB: request lock id 2
+    and Transfer 2 acquires locks
+        T2->>AccA: request lock id 1 (lower id, first)
+        Note over T2,AccA: queued — Transfer 1 holds it, not a deadlock
+    end
+
+    AccB-->>T1: locked
+    rect rgba(168, 51, 31, 0.10)
+        Note over T1: debit A, credit B, commit
+    end
+    T1->>AccA: release
+    T1->>AccB: release
+
+    AccA-->>T2: locked, now available
+    T2->>AccB: lock id 2
+    AccB-->>T2: locked
+    rect rgba(168, 51, 31, 0.10)
+        Note over T2: debit B, credit A, commit
+    end

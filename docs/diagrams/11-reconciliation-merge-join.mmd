@@ -1,0 +1,16 @@
+%% Fig. 11 — The same sort-merge-join pattern databases use to join two large sorted
+%% tables without hashing either one into memory first.
+flowchart TD
+    A(["Both cursors on their first row"]) --> B{"Compare current keys"}
+    B -->|"ledger key < bank key"| C["Flag LEDGER_ONLY<br/>advance ledger cursor"]
+    B -->|"ledger key > bank key"| D["Flag BANK_ONLY<br/>advance bank cursor"]
+    B -->|"keys equal"| E{"Amounts match?"}
+    E -->|"no"| F["Flag AMOUNT_MISMATCH"]
+    E -->|"yes"| G["No mismatch"]
+    F --> H["Advance both cursors"]
+    G --> H
+    C --> B
+    D --> B
+    H --> B
+    B -.->|"one side runs out of rows"| I(["Drain the remaining side —<br/>each leftover row is its own mismatch"])
+    I --> J(["Run complete"])

@@ -1,0 +1,16 @@
+%% Fig. 9 — One outbox row per journal entry. The foreign key is the same
+%% journal_entries.id from Fig. 6.
+erDiagram
+    JOURNAL_ENTRIES ||--o| OUTBOX_EVENTS : "emits"
+
+    OUTBOX_EVENTS {
+        bigint id PK
+        bigint journal_entry_id FK
+        varchar event_type
+        jsonb payload
+        varchar status
+        int attempts
+        varchar kafka_topic
+        timestamptz created_at
+        timestamptz published_at
+    }

@@ -1,0 +1,21 @@
+%% Fig. 1 — System context. The Transfer API and PostgreSQL are the whole of Phase 1.
+%% Outbox and Kafka (dashed) are built in Phase 2; reconciliation (dashed) is built in Phase 3.
+%% Sentinel (Project 2 of the portfolio) remains fully undesigned from LedgerCore's side.
+flowchart LR
+    client["Client"]
+    api["Transfer API\nSpring Boot"]
+    db[("PostgreSQL\naccounts · journal · idempotency")]
+    outbox["Transactional Outbox"]
+    kafka[("Kafka")]
+    sentinel["Sentinel\n(Project 2)"]
+    recon["Nightly Reconciliation"]
+
+    client -->|"HTTP + Idempotency-Key"| api
+    api -->|"locked read / write"| db
+    api -.->|"Phase 2"| outbox
+    outbox -.-> kafka
+    kafka -.-> sentinel
+    db -.->|"Phase 3"| recon
+
+    classDef future stroke-dasharray: 4 4;
+    class outbox,kafka,sentinel,recon future;

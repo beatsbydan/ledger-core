@@ -1,0 +1,26 @@
+%% Fig. 4 — Replay returns the original response verbatim; a different body on the same
+%% key is always rejected, never silently reused.
+sequenceDiagram
+    participant C1 as Client (first call)
+    participant C2 as Client (retry)
+    participant IK as idempotency_keys
+
+    C1->>IK: claim key K (fingerprint F)
+    IK-->>C1: new claim — IN_PROGRESS
+
+    rect rgba(168, 51, 31, 0.10)
+        Note over C1,IK: first call executes the transfer, then finalizes
+        C1->>IK: complete(K, 201, response)
+    end
+
+    C2->>IK: claim key K
+    alt same key, same fingerprint, status COMPLETED
+        IK-->>C2: cached response
+        C2->>C2: 201 Created — exact replay, no second transfer
+    else same key, different fingerprint
+        IK-->>C2: fingerprint mismatch
+        C2->>C2: 409 Idempotency Key Conflict
+    else same key, same fingerprint, still IN_PROGRESS
+        IK-->>C2: unresolved after bounded wait
+        C2->>C2: 409 Request In Progress
+    end

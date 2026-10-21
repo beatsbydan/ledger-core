@@ -1,0 +1,26 @@
+%% Fig. 12 — Every run leaves its own audit trail. entry_uuid and bank_reference are
+%% plain columns, not foreign keys — a BANK_ONLY mismatch has no journal entry to
+%% reference at all.
+erDiagram
+    RECONCILIATION_RUNS ||--o{ RECONCILIATION_MISMATCHES : "finds"
+
+    RECONCILIATION_RUNS {
+        bigint id PK
+        date run_date
+        varchar status
+        int ledger_rows_scanned
+        int bank_rows_scanned
+        int mismatch_count
+        timestamptz started_at
+        timestamptz completed_at
+    }
+    RECONCILIATION_MISMATCHES {
+        bigint id PK
+        bigint run_id FK
+        varchar mismatch_type
+        varchar entry_uuid
+        varchar bank_reference
+        varchar account_number
+        bigint ledger_amount_minor_units
+        bigint bank_amount_minor_units
+    }
